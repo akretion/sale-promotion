@@ -1,7 +1,7 @@
 # Copyright 2021 Akretion - Florian Mounier
 {
     "name": "Cumulative Global Discount",
-    "summary": "This module add a new option in promotion programs that allows to cumulate several global discounts.",
+    "summary": "This module add a new option in promotion programs that allows to cumulate several global discounts and respect discount order.",
     "version": "14.0.1.0.0",
     "category": "Sales",
     "website": "https://github.com/OCA/sale-promotion",

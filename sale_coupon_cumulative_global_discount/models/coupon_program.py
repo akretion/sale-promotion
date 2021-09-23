@@ -11,11 +11,5 @@ class CouponProgram(models.Model):
     )
 
     def _is_global_discount_program(self):
-        self.ensure_one()
-        return (
-            self.promo_applicability == "on_current_order"
-            and self.reward_type == "discount"
-            and self.discount_type == "percentage"
-            and self.discount_apply_on == "on_order"
-            and not self.cumulative
-        )
+        # Do not consider cumulative program as global discount
+        return super()._is_global_discount_program() and not self.cumulative
