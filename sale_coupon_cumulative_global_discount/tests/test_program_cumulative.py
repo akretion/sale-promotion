@@ -202,7 +202,7 @@ class TestSaleCouponCumulative(TestSaleCouponCommon):
 
         self.assertAlmostEqual(
             order.amount_total,
-            328.1,  # 386 - 0.05 * 386 - 0.1 * 386 <- Is it what we want?
+            328.1,  # 386 - 0.05 * 386 - 0.1 * 386
             2,
             "The best global discount and the cumulative are applied in the new order",
         )
@@ -616,4 +616,140 @@ class TestSaleCouponCumulative(TestSaleCouponCommon):
             372.78,  # 436 - (436 * 0.1) - 0.05 * (436 - (436 * 0.1))
             2,
             "Taxes should apply, taxed total should be 392.40",
+        )
+
+    def test_program_cumulative_free_product_coupon(self):
+        order = self.empty_order
+        self.env["sale.order.line"].create(
+            {
+                "product_id": self.largeCabinet.id,
+                "name": "Large Cabinet",
+                "product_uom_qty": 1.0,
+                "order_id": order.id,
+            }
+        )
+        self.env["sale.order.line"].create(
+            {
+                "product_id": self.conferenceChair.id,
+                "name": "Conference chair",
+                "product_uom_qty": 4.0,
+                "order_id": order.id,
+            }
+        )
+        self.env["coupon.program"].create(
+            {
+                "name": "5% prime",
+                "promo_code_usage": "no_code_needed",
+                "discount_type": "percentage",
+                "discount_percentage": 5.0,
+                "program_type": "promotion_program",
+                "sequence": 30,
+                "cumulative": True,
+            }
+        )
+        coupon_program = self.env["coupon.program"].create(
+            {
+                "name": "2 free conference chair if at least 1 large cabinet",
+                "promo_code_usage": "code_needed",
+                "program_type": "promotion_program",
+                "reward_type": "product",
+                "reward_product_quantity": 2,
+                "reward_product_id": self.conferenceChair.id,
+                "rule_min_quantity": 1,
+                "rule_products_domain": '["&", ["sale_ok","=",True], ["name","ilike","large cabinet"]]',
+                "sequence": 1,
+            }
+        )
+
+        self.env["coupon.generate.wizard"].with_context(
+            active_id=coupon_program.id
+        ).create(
+            {
+                "generation_type": "nbr_coupon",
+                "nbr_coupons": 1,
+            }
+        ).generate_coupon()
+        coupon = coupon_program.coupon_ids
+        self.env["sale.coupon.apply.code"].with_context(active_id=order.id).create(
+            {"coupon_code": coupon.code}
+        ).process_coupon()
+        order.recompute_coupon_lines()
+
+        self.assertAlmostEqual(
+            order.amount_total,
+            301.815,  # 386 - 2 * 16.5 - 0.1 * (386 - 2 * 16.5) - 0.05 * (386 - 2 * 16.5 - 0.1 * (386 - 2 * 16.5))
+            2,
+            "Cumulative promo should apply on fixed amount discount.",
+        )
+
+    def test_program_cumulative_global_discount_coupon(self):
+        order = self.empty_order
+        self.env["sale.order.line"].create(
+            {
+                "product_id": self.largeCabinet.id,
+                "name": "Large Cabinet",
+                "product_uom_qty": 1.0,
+                "order_id": order.id,
+            }
+        )
+        self.env["sale.order.line"].create(
+            {
+                "product_id": self.conferenceChair.id,
+                "name": "Conference chair",
+                "product_uom_qty": 4.0,
+                "order_id": order.id,
+            }
+        )
+        self.env["coupon.program"].create(
+            {
+                "name": "5% prime",
+                "promo_code_usage": "no_code_needed",
+                "discount_type": "percentage",
+                "discount_percentage": 5.0,
+                "program_type": "promotion_program",
+                "sequence": 30,
+                "cumulative": True,
+            }
+        )
+        coupon_program = self.env["coupon.program"].create(
+            {
+                "name": "50% full sale",
+                "promo_code_usage": "code_needed",
+                "program_type": "promotion_program",
+                "discount_type": "percentage",
+                "discount_percentage": 50.0,
+                "sequence": 20,
+            }
+        )
+        self.global_promo.active = False
+
+        order.recompute_coupon_lines()
+
+        self.assertAlmostEqual(
+            order.amount_total,
+            366.7,  # 386 - 0.05 * 386
+            2,
+            "Unapplied coupons should not be took in account.",
+        )
+
+        self.env["coupon.generate.wizard"].with_context(
+            active_id=coupon_program.id
+        ).create(
+            {
+                "generation_type": "nbr_coupon",
+                "nbr_coupons": 1,
+            }
+        ).generate_coupon()
+        coupon = coupon_program.coupon_ids
+        self.env["sale.coupon.apply.code"].with_context(active_id=order.id).create(
+            {"coupon_code": coupon.code}
+        ).process_coupon()
+
+        order.recompute_coupon_lines()
+
+        self.assertAlmostEqual(
+            order.amount_total,
+            183.35,  # 386 - 0.5 * 386 - 0.05 * (386 - 0.5 * 386)
+            2,
+            "Applied coupons should be took in account.",
         )
