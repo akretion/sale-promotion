@@ -11,7 +11,7 @@ class SaleOrder(models.Model):
         # We need to store the already processed programs to take their discount
         # in account in the further discount
 
-        # Clean many2many because it is auto populated
+        # Ensure we start the computation with no already processed programs
         self.processed_programs_ids -= self.processed_programs_ids
         rv = super()._update_existing_reward_lines()
         # Clean many2many again
@@ -50,6 +50,7 @@ class SaleOrder(models.Model):
 
         reward_values_discount = super()._get_reward_values_discount(program)
 
+        # Cumulative apply on all programs
         self.processed_programs_ids += program
 
         return reward_values_discount

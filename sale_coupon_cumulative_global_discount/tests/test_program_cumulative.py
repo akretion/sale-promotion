@@ -1,5 +1,4 @@
 from odoo.addons.sale_coupon.tests.common import TestSaleCouponCommon
-from odoo.exceptions import UserError
 from odoo.tests import tagged
 
 
@@ -203,7 +202,7 @@ class TestSaleCouponCumulative(TestSaleCouponCommon):
 
         self.assertAlmostEqual(
             order.amount_total,
-            328.1,  # 386 - 0.05 * 386 - 0.1 * 386
+            328.1,  # 386 - 0.05 * 386 - 0.1 * 386 <- Is it what we want?
             2,
             "The best global discount and the cumulative are applied in the new order",
         )
@@ -312,6 +311,104 @@ class TestSaleCouponCumulative(TestSaleCouponCommon):
             300.865,  # 386 - 0.1 * 386 - 5 - 0.07 * 320 - 0.2 * 16.5 - 0.05 * (386 - 0.1 * 386 - 5 - 0.07 * 320 - 0.2 * 16.5)
             2,
             "All the previous promotions and the cumulative are applied in the right order",
+        )
+
+    def test_program_cumulative_fixed_global_discount_first(self):
+        order = self.empty_order
+        self.env["sale.order.line"].create(
+            {
+                "product_id": self.largeCabinet.id,
+                "name": "Large Cabinet",
+                "product_uom_qty": 1.0,
+                "order_id": order.id,
+            }
+        )
+        self.env["sale.order.line"].create(
+            {
+                "product_id": self.conferenceChair.id,
+                "name": "Conference chair",
+                "product_uom_qty": 4.0,
+                "order_id": order.id,
+            }
+        )
+        self.env["coupon.program"].create(
+            {
+                "name": "50$ discount",
+                "promo_code_usage": "no_code_needed",
+                "reward_type": "discount",
+                "discount_type": "fixed_amount",
+                "discount_fixed_amount": 50,
+                "sequence": 20,
+            }
+        )
+        self.env["coupon.program"].create(
+            {
+                "name": "5% prime",
+                "promo_code_usage": "no_code_needed",
+                "discount_type": "percentage",
+                "discount_percentage": 5.0,
+                "program_type": "promotion_program",
+                "sequence": 30,
+                "cumulative": True,
+            }
+        )
+
+        order.recompute_coupon_lines()
+
+        self.assertAlmostEqual(
+            order.amount_total,
+            282.53,  # 386 - 0.1 * 386 - 50 - 0.05 * (386 - 0.1 * 386 - 50)
+            2,
+            "Cumulative promo should apply on fixed amount discount.",
+        )
+
+    def test_program_cumulative_fixed_global_discount_last(self):
+        order = self.empty_order
+        self.env["sale.order.line"].create(
+            {
+                "product_id": self.largeCabinet.id,
+                "name": "Large Cabinet",
+                "product_uom_qty": 1.0,
+                "order_id": order.id,
+            }
+        )
+        self.env["sale.order.line"].create(
+            {
+                "product_id": self.conferenceChair.id,
+                "name": "Conference chair",
+                "product_uom_qty": 4.0,
+                "order_id": order.id,
+            }
+        )
+        self.env["coupon.program"].create(
+            {
+                "name": "50$ discount",
+                "promo_code_usage": "no_code_needed",
+                "reward_type": "discount",
+                "discount_type": "fixed_amount",
+                "discount_fixed_amount": 50,
+                "sequence": 100,
+            }
+        )
+        self.env["coupon.program"].create(
+            {
+                "name": "5% prime",
+                "promo_code_usage": "no_code_needed",
+                "discount_type": "percentage",
+                "discount_percentage": 5.0,
+                "program_type": "promotion_program",
+                "sequence": 30,
+                "cumulative": True,
+            }
+        )
+
+        order.recompute_coupon_lines()
+
+        self.assertAlmostEqual(
+            order.amount_total,
+            280.03,  # 386 - 0.1 * 386 - 0.05 * (386 - 0.1 * 386) - 50
+            2,
+            "Cumulative promo should apply on fixed amount discount.",
         )
 
     def test_program_cumulative_multi_discounts(self):
