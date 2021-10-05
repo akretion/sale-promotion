@@ -10,5 +10,6 @@
     "license": "LGPL-3",
     "data": [
         "views/coupon_program_views.xml",
+        "views/res_config_settings_views.xml",
     ],
 }
