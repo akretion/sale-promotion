@@ -1,5 +1,4 @@
 from odoo import fields, models
-import types
 
 
 class SaleOrder(models.Model):
@@ -19,14 +18,18 @@ class SaleOrder(models.Model):
         self.processed_programs_ids -= self.processed_programs_ids
         return rv
 
-    def _get_paid_order_lines(self):
-        paid_order_lines = super()._get_paid_order_lines()
-
+    def _add_active_program_discount_lines(self, paid_order_lines):
         for program in self.active_programs_ids:
             paid_order_lines |= self.order_line.filtered(
                 lambda line: line.product_id == program.discount_line_product_id
             )
         return paid_order_lines
+
+    def _get_paid_order_lines(self):
+        # We return product order lines and global discounts in case of
+        # a cumulative promotion
+        paid_order_lines = super()._get_paid_order_lines()
+        return self._add_active_program_discount_lines(paid_order_lines)
 
     def _get_reward_values_discount(self, program):
         # We set active_programs_ids to processed_programs_ids
@@ -50,9 +53,3 @@ class SaleOrder(models.Model):
         self.processed_programs_ids += program
 
         return reward_values_discount
-
-    def __getattribute__(self, name):
-        if name == "_get_paid_order_lines":
-            return types.MethodType(SaleOrder._get_paid_order_lines, self)
-        else:
-            return object.__getattribute__(self, name)
