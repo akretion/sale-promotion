@@ -56,8 +56,6 @@ class SaleOrder(models.Model):
         return reward_values_discount
 
     def _get_applied_programs_with_rewards_on_current_order(self):
-        # We need sort the programs on sequences
-        # FIXME: This is broken in the UI since there are two different list view
-        # for coupon and promotion, the sequence is therefore broken
+        # We need to sort the programs on sequences
         applied_programs = super()._get_applied_programs_with_rewards_on_current_order()
         return applied_programs.sorted(key="sequence")

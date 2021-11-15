@@ -51,6 +51,18 @@
             (0, 0, {'view_mode': 'tree', 'view_id': ref('coupon_program_view_order_program_tree')})]"/>
     </record>
 
+    <!-- Coupon program form override -->
+    <record id="sale_coupon_program_view_coupon_program_form" model="ir.ui.view">
+        <field name="name">coupon.program.form</field>
+        <field name="model">coupon.program</field>
+        <field name="inherit_id" ref="sale_coupon.sale_coupon_program_view_coupon_program_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='discount_max_amount']/.." position="after">
+                <field name="cumulative" attrs="{'invisible': ['|', '|', ('discount_apply_on', '!=', 'on_order'), ('discount_type', '!=', 'percentage'), ('reward_type', '!=', 'discount')]}" />
+            </xpath>
+        </field>
+    </record>
+
     <!-- Promo program form override -->
     <record id="sale_coupon_program_view_promo_program_form" model="ir.ui.view">
         <field name="name">coupon.program.form</field>
