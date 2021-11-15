@@ -1,5 +1,6 @@
-from odoo.addons.sale_coupon.tests.common import TestSaleCouponCommon
 from odoo.tests import tagged
+
+from odoo.addons.sale_coupon.tests.common import TestSaleCouponCommon
 
 
 @tagged("post_install", "-at_install")
