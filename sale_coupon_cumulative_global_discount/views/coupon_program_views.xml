@@ -19,6 +19,7 @@
     <record id="coupon_program_view_tree" model="ir.ui.view">
         <field name="name">coupon.program.tree</field>
         <field name="model">coupon.program</field>
+        <field name="priority" eval="100" />
         <field name="inherit_id" ref="coupon.coupon_program_view_tree" />
 
         <field name="arch" type="xml">
@@ -32,6 +33,7 @@
     <record id="coupon_program_view_promo_program_tree" model="ir.ui.view">
         <field name="name">coupon.promotion.program.tree</field>
         <field name="model">coupon.program</field>
+        <field name="priority" eval="100" />
         <field name="inherit_id" ref="coupon.coupon_program_view_promo_program_tree" />
         <field name="arch" type="xml">
             <xpath expr="//field[@name='sequence']" position="replace" />

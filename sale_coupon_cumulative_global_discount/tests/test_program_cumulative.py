@@ -309,7 +309,9 @@ class TestSaleCouponCumulative(TestSaleCouponCommon):
 
         self.assertAlmostEqual(
             order.amount_total,
-            300.865,  # 386 - 0.1 * 386 - 5 - 0.07 * 320 - 0.2 * 16.5 - 0.05 * (386 - 0.1 * 386 - 5 - 0.07 * 320 - 0.2 * 16.5)
+            # 386 - 0.1 * 386 - 5 - 0.07 * 320 - 0.2 * 16.5
+            # - 0.05 * (386 - 0.1 * 386 - 5 - 0.07 * 320 - 0.2 * 16.5)
+            300.865,
             2,
             "All the previous promotions and the cumulative are applied in the right order",
         )
@@ -657,7 +659,8 @@ class TestSaleCouponCumulative(TestSaleCouponCommon):
                 "reward_product_quantity": 2,
                 "reward_product_id": self.conferenceChair.id,
                 "rule_min_quantity": 1,
-                "rule_products_domain": '["&", ["sale_ok","=",True], ["name","ilike","large cabinet"]]',
+                "rule_products_domain": '["&", ["sale_ok","=",True], '
+                '["name","ilike","large cabinet"]]',
                 "sequence": 1,
             }
         )
@@ -678,7 +681,9 @@ class TestSaleCouponCumulative(TestSaleCouponCommon):
 
         self.assertAlmostEqual(
             order.amount_total,
-            301.815,  # 386 - 2 * 16.5 - 0.1 * (386 - 2 * 16.5) - 0.05 * (386 - 2 * 16.5 - 0.1 * (386 - 2 * 16.5))
+            # 386 - 2 * 16.5 - 0.1 * (386 - 2 * 16.5)
+            # - 0.05 * (386 - 2 * 16.5 - 0.1 * (386 - 2 * 16.5))
+            301.815,
             2,
             "Cumulative promo should apply on fixed amount discount.",
         )
