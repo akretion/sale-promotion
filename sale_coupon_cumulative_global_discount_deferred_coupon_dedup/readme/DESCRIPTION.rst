@@ -1,0 +1,1 @@
+This module makes sale_coupon_cumulative_global_discount works with sale_coupon_deferred_coupon_dedup.
