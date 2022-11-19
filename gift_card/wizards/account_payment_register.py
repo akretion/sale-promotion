@@ -110,6 +110,7 @@ class AccountGiftCardPaymentRegister(models.TransientModel):
                                     "payment_id": res.id,
                                     "amount_used": card.gc_amount_used,
                                     "validation_mode": card.validation_mode,
+                                    "account_move_ids": self.line_ids.move_id.ids,
                                 },
                             )
                         ]

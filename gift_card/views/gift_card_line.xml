@@ -1,29 +1,41 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo>
 
- <record model="ir.ui.view" id="gift_card_line_tree_view">
+    <record model="ir.ui.view" id="gift_card_line_tree_view">
         <field name="name">Gift Cards Line tree</field>
         <field name="model">gift.card.line</field>
         <field name="arch" type="xml">
             <tree string="Gift Cards">
                  <field name="gift_card_id" />
                  <field name="amount_used" />
+                 <field name="sale_order_ids" widget="many2many_tags" optional="show"/>
+                 <field name="account_move_ids" widget="many2many_tags" optional="show"/>
                  <field name="payment_id" />
             </tree>
         </field>
     </record>
 
-    <!-- Action -->
-    <record id="show_gift_card_lines" model="ir.actions.act_window">
-        <field name="name">Gift Cards Line Action</field>
-        <field name="res_model">gift.card.line</field>
-        <field name="view_mode">tree</field>
-        <field
-            name="view_ids"
-            eval="[
-            (5, 0, 0),
-            (0, 0, {'view_mode': 'tree'})]"
-        />
+    <record model="ir.ui.view" id="gift_card_line_view_form">
+        <field name="name">gift.card.line.form</field>
+        <field name="model">gift.card.line</field>
+        <field name="arch" type="xml">
+            <form string="Gift Card Use">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="gift_card_id"/>
+                        <field name="beneficiary_id"/>
+                        <field name="amount_used"/>
+                        <field name="gift_card_id"/>
+                        <field name="validation_mode"/>
+                    </group>
+                    <group>
+                        <field name="payment_id"/>
+                        <field name="sale_order_ids"/>
+                        <field name="account_move_ids"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
     </record>
-
 </odoo>
