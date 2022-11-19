@@ -101,6 +101,31 @@ class GiftCard(models.Model):
         inverse="_inverse_amounts",
     )
 
+    account_move_ids = fields.Many2many(
+        comodel_name="account.move",
+        compute="_compute_account_move_ids",
+        string="Invoices",
+        readonly=True,
+        )
+
+    sale_order_ids = fields.Many2many(
+        comodel_name="sale.order",
+        compute="_compute_sale_order_ids",
+        string="Sale Orders",
+        readonly=True,
+        )
+
+    @api.depends("gift_card_line_ids.account_move_ids")
+    def _compute_account_move_ids(self):
+        for rec in self:
+            rec.account_move_ids = rec.gift_card_line_ids.account_move_ids
+
+    @api.depends("gift_card_line_ids.sale_order_ids")
+    def _compute_sale_order_ids(self):
+        for rec in self:
+            rec.sale_order_ids = rec.gift_card_line_ids.sale_order_ids
+
+
     @api.depends("start_date", "end_date", "available_amount", "duration")
     def _compute_state(self):
         for card in self:

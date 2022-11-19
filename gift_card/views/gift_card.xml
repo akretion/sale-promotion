@@ -51,6 +51,8 @@
                             >
                                 <tree string="Gift Cards Lines">
                                      <field name="payment_id" />
+                                     <field name="sale_order_ids" widget="many2many_tags" optional="show"/>
+                                     <field name="account_move_ids" widget="many2many_tags" optional="hide"/>
                                      <field name="validation_mode" />
                                      <field name="amount_used" />
                                 </tree>
@@ -79,6 +81,8 @@
                     decoration-danger="state == 'outdated' or state == 'soldout'"
                     widget="badge"
                 />
+                 <field name="sale_order_ids" widget="many2many_tags" optional="show"/>
+                 <field name="account_move_ids" widget="many2many_tags" optional="hide"/>
                  <field name="start_date" optional="show" />
                  <field name="end_date" optional="show" />
                  <field name="duration" optional="show" />
@@ -123,7 +127,7 @@
                     <group expand="0" string="Group By...">
                         <filter
                         string="Gift Card Template"
-                        name="product"
+                        name="gift_card_template"
                         domain="[]"
                         context="{'group_by': 'gift_card_tmpl_id'}"
                     />
@@ -132,6 +136,18 @@
                         name="status"
                         domain="[]"
                         context="{'group_by': 'state'}"
+                    />
+                        <filter
+                        string="Sale Order"
+                        name="sale_order"
+                        domain="[]"
+                        context="{'group_by': 'sale_order_ids'}"
+                    />
+                        <filter
+                        string="Invoice"
+                        name="invoice"
+                        domain="[]"
+                        context="{'group_by': 'account_move_ids'}"
                     />
                     </group>
                </search>

@@ -14,6 +14,24 @@ class GiftCardLine(models.Model):
     name = fields.Char(readonly=True)
     gift_card_id = fields.Many2one(comodel_name="gift.card", readonly=True)
     payment_id = fields.Many2one(comodel_name="account.payment", readonly=True)
+    account_move_ids = fields.Many2many(
+        comodel_name="account.move",
+        string="Invoices",
+        readonly=True,
+        )
+
+    sale_order_ids = fields.Many2many(
+        comodel_name="sale.order",
+        compute="_compute_sale_order_ids",
+        string="Sale Orders",
+        readonly=True,
+        )
+
+    @api.depends("account_move_ids")
+    def _compute_sale_order_ids(self):
+        for rec in self:
+            rec.sale_order_ids = rec.account_move_ids.invoice_line_ids.sale_line_ids.mapped("order_id")
+
     amount_used = fields.Float("Amount", readonly=True)
     validation_mode = fields.Selection(
         [

@@ -26,6 +26,8 @@
         "views/res_config_setting.xml",
         "views/gift_card.xml",
         "views/gift_card_line.xml",
+        "views/account_move.xml",
+        "views/sale_order.xml",
         "wizards/account_payment_register_views.xml",
     ],
 }
