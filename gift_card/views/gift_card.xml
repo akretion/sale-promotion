@@ -5,7 +5,7 @@
         <field name="name">Gift Cards form</field>
         <field name="model">gift.card</field>
         <field name="arch" type="xml">
-            <form>
+            <form create="false">
                 <sheet>
                     <group>
                         <group name="attributes">
@@ -68,7 +68,7 @@
         <field name="name">Gift Cards tree</field>
         <field name="model">gift.card</field>
         <field name="arch" type="xml">
-            <tree string="Gift Cards">
+            <tree string="Gift Cards" create="false">
                  <field name="name" />
                  <field name="gift_card_tmpl_id" />
                  <field name="initial_amount" />
