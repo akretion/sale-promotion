@@ -5,16 +5,16 @@
         <field name="name">Gift Cards form</field>
         <field name="model">gift.card</field>
         <field name="arch" type="xml">
-            <form create="false">
+            <form>
                 <sheet>
                     <group>
                         <group name="attributes">
                             <field name="name" />
-                            <field name="gift_card_tmpl_id" readonly="1" />
+                            <field name="gift_card_tmpl_id" />
                             <field name="buyer_id" readonly="1" />
-                            <field name="beneficiary_id" readonly="1" />
+                            <field name="beneficiary_id" />
                             <field name="sale_id" readonly="1" />
-                            <field name="code" readonly="1" />
+                            <field name="code" />
                             <field
                                 name="state"
                                 readonly="1"
@@ -23,16 +23,17 @@
                                 decoration-danger="state == 'outdated' or state == 'soldout'"
                                 widget="badge"
                             />
+                            <field name="created_from_backoffice" readonly="1" />
                         </group>
                         <group name="amounts" string="Amounts">
-                            <field name="initial_amount" readonly="1" />
-                            <field name="available_amount" readonly="1" />
+                            <field name="initial_amount" />
+                            <field name="available_amount" />
                             <field name="total_amount_used" readonly="1" />
                         </group>
                         <group name="configuration" string="Configuration">
                             <field name="is_divisible" />
                             <field name="duration" />
-                            <field name="start_date" readonly="1" />
+                            <field name="start_date" />
                             <field name="end_date" />
                             <field name="information" />
                         </group>
@@ -51,8 +52,16 @@
                             >
                                 <tree string="Gift Cards Lines">
                                      <field name="payment_id" />
-                                     <field name="sale_order_ids" widget="many2many_tags" optional="show"/>
-                                     <field name="account_move_ids" widget="many2many_tags" optional="hide"/>
+                                     <field
+                                        name="sale_order_ids"
+                                        widget="many2many_tags"
+                                        optional="show"
+                                    />
+                                     <field
+                                        name="account_move_ids"
+                                        widget="many2many_tags"
+                                        optional="hide"
+                                    />
                                      <field name="validation_mode" />
                                      <field name="amount_used" />
                                 </tree>
@@ -60,6 +69,11 @@
                         </page>
                 </notebook>
                 </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" />
+                    <field name="activity_ids" />
+                    <field name="message_ids" />
+                </div>
             </form>
         </field>
     </record>
@@ -68,7 +82,7 @@
         <field name="name">Gift Cards tree</field>
         <field name="model">gift.card</field>
         <field name="arch" type="xml">
-            <tree string="Gift Cards" create="false">
+            <tree string="Gift Cards">
                  <field name="name" />
                  <field name="gift_card_tmpl_id" />
                  <field name="initial_amount" />
@@ -81,8 +95,12 @@
                     decoration-danger="state == 'outdated' or state == 'soldout'"
                     widget="badge"
                 />
-                 <field name="sale_order_ids" widget="many2many_tags" optional="show"/>
-                 <field name="account_move_ids" widget="many2many_tags" optional="hide"/>
+                 <field name="sale_order_ids" widget="many2many_tags" optional="show" />
+                 <field
+                    name="account_move_ids"
+                    widget="many2many_tags"
+                    optional="hide"
+                />
                  <field name="start_date" optional="show" />
                  <field name="end_date" optional="show" />
                  <field name="duration" optional="show" />
@@ -161,6 +179,7 @@
         <field name="res_model">gift.card</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="gift_card_view_search" />
+        <field name="context">{'default_created_from_backoffice': True}</field>
         <field
             name="view_ids"
             eval="[
