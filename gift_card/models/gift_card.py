@@ -2,7 +2,6 @@
 # @author Kévin Roche <kevin.roche@akretion.com>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 
@@ -12,7 +11,7 @@ from odoo.exceptions import UserError
 
 class GiftCard(models.Model):
     _name = "gift.card"
-    _inherit = ["code.format.mixin"]
+    _inherit = ["code.format.mixin", "mail.thread", "mail.activity.mixin"]
     _description = "Gift Card"
 
     _code_mask = {"mask": "code_mask", "template": "gift_card_tmpl_id"}
@@ -22,7 +21,9 @@ class GiftCard(models.Model):
         "sale.order", help="sale order where the gift card was bought"
     )
     gift_card_tmpl_id = fields.Many2one(
-        comodel_name="gift.card.template", string="Gift Card Template ID"
+        comodel_name="gift.card.template",
+        string="Gift Card Template ID",
+        tracking=True,
     )
     payment_ids = fields.Many2many(
         comodel_name="account.payment",
@@ -45,7 +46,7 @@ class GiftCard(models.Model):
     beneficiary_id = fields.Many2one(
         "res.partner",
         string="Gift Card Beneficiary",
-        readonly=True,
+        tracking=True,
     )
 
     gift_card_line_ids = fields.One2many(
@@ -72,13 +73,27 @@ class GiftCard(models.Model):
         compute="_compute_state",
         readonly=True,
         store=True,
+        tracking=True,
     )
 
-    is_divisible = fields.Boolean(default=True)
+    is_divisible = fields.Boolean(
+        default=True,
+        tracking=True,
+    )
 
-    duration = fields.Integer(string="Gift Card Duration (in months)")
-    start_date = fields.Date(string="Start Date")
-    end_date = fields.Date(string="End Date")
+    duration = fields.Integer(
+        string="Gift Card Duration (in months)",
+        tracking=True,
+    )
+    start_date = fields.Date(
+        string="Start Date",
+        default=lambda self: fields.Date.context_today(self),
+        tracking=True,
+    )
+    end_date = fields.Date(
+        string="End Date",
+        tracking=True,
+    )
 
     currency_id = fields.Many2one(related="journal_id.currency_id", readonly=True)
     journal_id = fields.Many2one(
@@ -88,11 +103,16 @@ class GiftCard(models.Model):
         readonly=True,
     )
 
-    initial_amount = fields.Monetary(required=True, currency_field="currency_id")
+    initial_amount = fields.Monetary(
+        required=True,
+        currency_field="currency_id",
+        tracking=True,
+    )
     available_amount = fields.Monetary(
         currency_field="currency_id",
         store=True,
         compute="_compute_amounts",
+        tracking=True,
     )
     total_amount_used = fields.Monetary(
         currency_field="currency_id",
@@ -106,14 +126,16 @@ class GiftCard(models.Model):
         compute="_compute_account_move_ids",
         string="Invoices",
         readonly=True,
-        )
+    )
 
     sale_order_ids = fields.Many2many(
         comodel_name="sale.order",
         compute="_compute_sale_order_ids",
         string="Sale Orders",
         readonly=True,
-        )
+    )
+
+    created_from_backoffice = fields.Boolean(default=False, tracking=True)
 
     @api.depends("gift_card_line_ids.account_move_ids")
     def _compute_account_move_ids(self):
@@ -125,22 +147,23 @@ class GiftCard(models.Model):
         for rec in self:
             rec.sale_order_ids = rec.gift_card_line_ids.sale_order_ids
 
-
     @api.depends("start_date", "end_date", "available_amount", "duration")
     def _compute_state(self):
         for card in self:
-            if card.duration and card.end_date < fields.Date.context_today(card):
+            if card.end_date and card.end_date < fields.Date.context_today(card):
                 card.state = "outdated"
             if card.available_amount == 0:
                 # soldout state is with_delay to avoid that the current
                 # gift card's use to be soldout in the process.
                 self.with_delay()._update_soldout_state(card)
-            if card.start_date > fields.Date.context_today(card):
+            if card.start_date and card.start_date > fields.Date.context_today(card):
                 card.state = "not_activated"
             if (
                 card.state == "not_activated"
+                and card.start_date
                 and card.start_date <= fields.Date.context_today(card)
             ):
+                # FIXME: this should be done in a cron
                 card.state = "active"
 
     def _update_soldout_state(self, card):
@@ -201,13 +224,11 @@ class GiftCard(models.Model):
 
     @api.model
     def create(self, vals):
-        if "start_date" not in vals:
-            vals["start_date"] = fields.Date.context_today(self)
-        elif type(vals["start_date"]) == str:
-            vals["start_date"] = datetime.fromisoformat(vals["start_date"])
-        vals["end_date"] = vals["start_date"] + relativedelta(months=vals["duration"])
+        if "end_date" not in vals and "start_date" in vals and "duration" in vals:
+            vals["end_date"] = vals["start_date"] + relativedelta(
+                months=vals["duration"]
+            )
         if "beneficiary_id" not in vals:
-            vals["beneficiary_id"] = vals["buyer_id"]
+            vals["beneficiary_id"] = vals.get("buyer_id")
         res = super().create(vals)
-        res.code = res._generate_code()
         return res
