@@ -5,7 +5,7 @@
 {
     "name": "gift_card",
     "summary": "Gift Card as a payment mode",
-    "version": "14.0.1.0.0",
+    "version": "14.0.2.0.0",
     "category": "Sales",
     "website": "https://github.com/OCA/sale-promotion",
     "author": "Akretion, Odoo Community Association (OCA)",

@@ -16,10 +16,12 @@ class GiftCard(models.Model):
 
     _code_mask = {"mask": "code_mask", "template": "gift_card_tmpl_id"}
 
-    invoice_id = fields.Many2one(comodel_name="account.move", string="Invoice")
-    sale_id = fields.Many2one(
-        "sale.order", help="sale order where the gift card was bought"
+    invoice_line_id = fields.Many2one(comodel_name="account.move.line")
+    invoice_id = fields.Many2one("account.move", related="invoice_line_id.move_id")
+    sale_line_id = fields.Many2one(
+        "sale.order.line", help="sale order where the gift card was bought"
     )
+    sale_id = fields.Many2one("sale.order", related="sale_line_id.order_id")
     gift_card_tmpl_id = fields.Many2one(
         comodel_name="gift.card.template",
         string="Gift Card Template ID",
@@ -147,24 +149,30 @@ class GiftCard(models.Model):
         for rec in self:
             rec.sale_order_ids = rec.gift_card_line_ids.sale_order_ids
 
-    @api.depends("start_date", "end_date", "available_amount", "duration")
+    @api.depends(
+        "start_date", "end_date", "available_amount", "duration", "invoice_id.state"
+    )
     def _compute_state(self):
+        today = fields.Date.today()
         for card in self:
-            if card.end_date and card.end_date < fields.Date.context_today(card):
+            if not card.invoice_id or card.invoice_id.state == "draft":
+                card.state = "draft"
+            elif card.end_date and card.end_date < today:
                 card.state = "outdated"
-            if card.available_amount == 0:
+            elif card.available_amount == 0:
                 # soldout state is with_delay to avoid that the current
                 # gift card's use to be soldout in the process.
                 self.with_delay()._update_soldout_state(card)
-            if card.start_date and card.start_date > fields.Date.context_today(card):
+            elif card.start_date and card.start_date > today:
                 card.state = "not_activated"
-            if (
-                card.state == "not_activated"
-                and card.start_date
-                and card.start_date <= fields.Date.context_today(card)
-            ):
+            else:
                 # FIXME: this should be done in a cron
                 card.state = "active"
+
+    @api.model
+    def cron_update_gift_card_state(self):
+        cards = self.search([("state", "not in", ["soldout"])])
+        cards._compute_state()
 
     def _update_soldout_state(self, card):
         card.state = "soldout"
