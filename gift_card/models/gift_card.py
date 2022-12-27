@@ -155,7 +155,9 @@ class GiftCard(models.Model):
     def _compute_state(self):
         today = fields.Date.today()
         for card in self:
-            if not card.invoice_id or card.invoice_id.state == "draft":
+            if card.invoice_id and card.invoice_id.state == "draft":
+                card.state = "draft"
+            elif card.sale_id and card.sale_id.state in ["draft", "sent"]:
                 card.state = "draft"
             elif card.end_date and card.end_date < today:
                 card.state = "outdated"
