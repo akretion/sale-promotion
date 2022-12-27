@@ -150,7 +150,12 @@ class GiftCard(models.Model):
             rec.sale_order_ids = rec.gift_card_line_ids.sale_order_ids
 
     @api.depends(
-        "start_date", "end_date", "available_amount", "duration", "invoice_id.state"
+        "start_date",
+        "end_date",
+        "available_amount",
+        "duration",
+        "invoice_id.state",
+        "sale_id.state",
     )
     def _compute_state(self):
         today = fields.Date.today()
