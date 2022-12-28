@@ -4,6 +4,7 @@
 
 from odoo import fields, models
 
+
 class SaleOrder(models.Model):
     _inherit = "sale.order"
 
@@ -11,12 +12,19 @@ class SaleOrder(models.Model):
         comodel_name="gift.card.line",
         compute="_compute_gift_card_line",
         string="Gift Card uses",
-        )
+    )
     gift_card_line_count = fields.Integer(compute="_compute_gift_card_line")
 
     def _compute_gift_card_line(self):
         for rec in self:
-            gift_card_lines = [line for line in self.env["gift.card.line"].search([]) if rec.id in line.account_move_ids.invoice_line_ids.mapped('sale_line_ids').mapped('order_id').ids]
+            gift_card_lines = [
+                line
+                for line in self.env["gift.card.line"].search([])
+                if rec.id
+                in line.account_move_ids.invoice_line_ids.mapped("sale_line_ids")
+                .mapped("order_id")
+                .ids
+            ]
             rec.gift_card_line_ids = [(6, 0, [line.id for line in gift_card_lines])]
             rec.gift_card_line_count = len(gift_card_lines)
 
@@ -35,3 +43,11 @@ class SaleOrder(models.Model):
             "domain": [("id", "in", self.gift_card_line_ids.ids)],
             "views": views,
         }
+
+
+class SaleOrderLine(models.Model):
+    _inherit = "sale.order.line"
+
+    gift_card_ids = fields.One2many(
+        comodel_name="gift.card", inverse_name="sale_line_id"
+    )

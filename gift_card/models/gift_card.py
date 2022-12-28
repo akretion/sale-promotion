@@ -19,7 +19,8 @@ class GiftCard(models.Model):
     invoice_line_id = fields.Many2one(comodel_name="account.move.line")
     invoice_id = fields.Many2one("account.move", related="invoice_line_id.move_id")
     sale_line_id = fields.Many2one(
-        "sale.order.line", help="sale order where the gift card was bought"
+        "sale.order.line",
+        help="sale order where the gift card was bought",
     )
     sale_id = fields.Many2one("sale.order", related="sale_line_id.order_id")
     gift_card_tmpl_id = fields.Many2one(
