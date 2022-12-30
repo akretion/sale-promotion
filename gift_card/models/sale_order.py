@@ -44,6 +44,44 @@ class SaleOrder(models.Model):
             "views": views,
         }
 
+    def action_confirm(self):
+        res = super().action_confirm()
+        self._create_gift_cards()
+        return res
+
+    def _create_gift_cards(self):
+        for order in self:
+            for line in order.order_line:
+                tmpl = line.product_id.product_tmpl_id.gift_cart_template_ids
+                if tmpl:
+                    invoice_line_id = None
+                    invoice_line = line.mapped("invoice_lines")
+                    if invoice_line and len(invoice_line) == 1:
+                        invoice_line_id = invoice_line.id
+                    cards = self.env["gift.card"].search(
+                        [
+                            "|",
+                            ("sale_line_id", "=", line.id),
+                            ("invoice_line_id", "in", line.invoice_lines.ids),
+                        ]
+                    )
+                    for card in cards:
+                        if not card.sale_line_id:
+                            card.sale_line_id = line
+                    while len(cards) < int(line.product_uom_qty):
+                        new_card = self.env["gift.card"].create(
+                            {
+                                "sale_line_id": line.id,
+                                "invoice_line_id": invoice_line_id,
+                                "initial_amount": line.price_unit,
+                                "is_divisible": tmpl.is_divisible,
+                                "duration": tmpl.duration,
+                                "buyer_id": line.order_id.partner_id.commercial_partner_id.id,
+                                "gift_card_tmpl_id": tmpl.id,
+                            }
+                        )
+                        cards |= new_card
+
 
 class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
