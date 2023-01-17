@@ -119,7 +119,7 @@
                     <field
                     name="name"
                     string="Gift Cards"
-                    filter_domain="['|', ('name', 'ilike', self), ('origin', 'ilike', self)]"
+                    filter_domain="['|', ('name', 'ilike', self), ('code', 'ilike', self)]"
                 />
                     <filter
                     string="Active"
