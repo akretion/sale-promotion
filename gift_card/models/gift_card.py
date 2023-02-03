@@ -165,6 +165,14 @@ class GiftCard(models.Model):
                 card.state = "draft"
             elif card.sale_id and card.sale_id.state in ["draft", "sent"]:
                 card.state = "draft"
+            elif (
+                not card.sale_id
+                and not card.invoice_id
+                and not card.created_from_backoffice
+            ):
+                # Do not activate card that is not linked to a sale/invoice
+                # Except if it was created manually
+                card.state = "not_activated"
             elif card.end_date and card.end_date < today:
                 card.state = "outdated"
             elif card.available_amount == 0:
@@ -174,7 +182,6 @@ class GiftCard(models.Model):
             elif card.start_date and card.start_date > today:
                 card.state = "not_activated"
             else:
-                # FIXME: this should be done in a cron
                 card.state = "active"
 
     @api.model
