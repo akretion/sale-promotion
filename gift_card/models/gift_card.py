@@ -163,8 +163,10 @@ class GiftCard(models.Model):
         for card in self:
             if card.invoice_id and card.invoice_id.state == "draft":
                 card.state = "draft"
+                card._update_initial_amount()
             elif card.sale_id and card.sale_id.state in ["draft", "sent"]:
                 card.state = "draft"
+                card._update_initial_amount()
             elif (
                 not card.sale_id
                 and not card.invoice_id
@@ -183,6 +185,14 @@ class GiftCard(models.Model):
                 card.state = "not_activated"
             else:
                 card.state = "active"
+                card._update_initial_amount()
+
+    def _update_initial_amount(self):
+        for record in self:
+            if record.invoice_line_id:
+                record.initial_amount = record.invoice_line_id.price_unit
+            elif record.sale_line_id:
+                record.initial_amount = record.sale_line_id.price_unit
 
     @api.model
     def cron_update_gift_card_state(self):
