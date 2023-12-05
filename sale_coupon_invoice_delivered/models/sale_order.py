@@ -196,7 +196,7 @@ class SaleOrder(models.Model):
             # First check if program still applies on delivered quantities
 
             # To keep it simple for now only check if at least one of
-            # necessary products is delivered
+            # necessary products is delivered, except free products
 
             valid_products = (
                 (
@@ -208,6 +208,27 @@ class SaleOrder(models.Model):
                 if program.reward_type != "product"
                 else program.reward_product_id
             )
+            # If the program is a percentage discount and there is other product
+            # rewards, we should not consider this product as a valid product
+            # for the program if all the products are rewarded, i.e. the
+            # percentage promotion does not apply on it
+            if program.discount_type == "percentage":
+                free_product_programs = applied_programs.filtered(
+                    lambda p: p.reward_type == "product" and p != program
+                )
+                for product_program in free_product_programs:
+                    if (
+                        order_lines.filtered(
+                            lambda sol: sol.product_id
+                            == product_program.reward_product_id
+                        ).product_uom_qty
+                        == self.order_line.filtered(
+                            lambda sol: sol.product_id
+                            == product_program.discount_line_product_id
+                        ).product_uom_qty
+                    ):
+                        valid_products -= product_program.reward_product_id
+
             qty_delivered = sum(
                 self._get_delivred_quantity_for_line(line)
                 for line in order_lines.filtered(
